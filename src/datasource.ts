@@ -18,7 +18,7 @@ import _ from 'lodash';
 import API from './api';
 import { detectFieldType } from './detectFieldType';
 import { parseValues } from './parseValues';
-import { JsonApiDataSourceOptions, JsonApiQuery, Pair } from './types';
+import { JsonApiDataSourceOptions, JsonApiQuery, JsonField, Pair } from './types';
 
 export class JsonDataSource extends DataSourceApi<JsonApiQuery, JsonApiDataSourceOptions> {
   api: API;
@@ -120,6 +120,47 @@ export class JsonDataSource extends DataSourceApi<JsonApiQuery, JsonApiDataSourc
     }
   }
 
+  private getFieldValue<T>(field: JsonField, index: number, query: JsonApiQuery, parentData: any, range?: TimeRange, scopedVars?: ScopedVars): Field[] {
+    const replaceWithVars = replace(scopedVars, range);
+    let value: any;
+    switch (field.language) {
+      case 'jsonata':
+        const expression = jsonata(field.jsonPath);
+
+        const bindings: Record<string, any> = {};
+
+        // Bind dashboard variables to JSONata variables.
+        getTemplateSrv()
+          .getVariables()
+          .map((v) => ({ name: v.name, value: getVariable(v.name) }))
+          .forEach((v) => {
+            bindings[v.name] = v.value;
+          });
+
+        value = expression.evaluate(parentData, bindings);
+
+        break;
+      
+      default:
+        const path = replaceWithVars(field.jsonPath);
+        value = JSONPath({ path, json: parentData });
+        break;
+    }
+
+    if ("children" in field) {
+      return field.children.flatMap((child, childIdx) => this.getFieldValue(child, childIdx, query, value, range, scopedVars));
+    }
+    // Ensure that we always return an array.
+    const arrayResult = Array.isArray(value) ? value : [value];
+    const retval = {
+      name: replaceWithVars(field.name ?? '') || (query.fields.length > 1 ? `result${index}` : 'result'),
+      type: field.type ? field.type : detectFieldType(arrayResult),
+      values: new ArrayVector(arrayResult),
+      config: {},
+    };
+    return [retval];
+  }
+
   async doRequest(query: JsonApiQuery, range?: TimeRange, scopedVars?: ScopedVars): Promise<DataFrame[]> {
     const replaceWithVars = replace(scopedVars, range);
 
@@ -131,52 +172,7 @@ export class JsonDataSource extends DataSourceApi<JsonApiQuery, JsonApiDataSourc
 
     const fields: Field[] = query.fields
       .filter((field) => field.jsonPath)
-      .map((field, index) => {
-        switch (field.language) {
-          case 'jsonata':
-            const expression = jsonata(field.jsonPath);
-
-            const bindings: Record<string, any> = {};
-
-            // Bind dashboard variables to JSONata variables.
-            getTemplateSrv()
-              .getVariables()
-              .map((v) => ({ name: v.name, value: getVariable(v.name) }))
-              .forEach((v) => {
-                bindings[v.name] = v.value;
-              });
-
-            const result = expression.evaluate(json, bindings);
-
-            // Ensure that we always return an array.
-            const arrayResult = Array.isArray(result) ? result : [result];
-
-            return {
-              name: replaceWithVars(field.name ?? '') || (query.fields.length > 1 ? `result${index}` : 'result'),
-              type: field.type ? field.type : detectFieldType(arrayResult),
-              values: new ArrayVector(arrayResult),
-              config: {},
-            };
-          default:
-            const path = replaceWithVars(field.jsonPath);
-            const values = JSONPath({ path, json });
-
-            // Get the path for automatic setting of the field name.
-            //
-            // Casted to any due to typing issues with JSONPath-Plus
-            const paths = (JSONPath as any).toPathArray(path);
-
-            const propertyType = field.type ? field.type : detectFieldType(values);
-            const typedValues = parseValues(values, propertyType);
-
-            return {
-              name: replaceWithVars(field.name ?? '') || paths[paths.length - 1],
-              type: propertyType,
-              values: new ArrayVector(typedValues),
-              config: {},
-            };
-        }
-      });
+      .flatMap((field, index) => this.getFieldValue(field, index, query, json, range, scopedVars));
 
     const fieldLengths = fields.map((field) => field.values.length);
     const uniqueFieldLengths = Array.from(new Set(fieldLengths)).length;

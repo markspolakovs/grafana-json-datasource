@@ -223,16 +223,18 @@ export class JsonDataSource extends DataSourceApi<JsonApiQuery, JsonApiDataSourc
       query.cacheDurationSeconds,
       query.method,
       interpolate(query.urlPath),
-      (query.params ?? []).map(([k, vs]) => [interpolate(k), vs.map(v => interpolate(v))]),
+      (query.params ?? []).map(([k, vs]) => [interpolate(k), vs.map((v) => interpolate(v))]),
       (query.headers ?? []).map(interpolateKeyValue),
       interpolate(query.body)
     );
   }
 }
 
-const replace = (scopedVars?: any, range?: TimeRange) => (str: string): string => {
-  return replaceMacros(getTemplateSrv().replace(str, scopedVars), range);
-};
+const replace =
+  (scopedVars?: any, range?: TimeRange) =>
+  (str: string): string => {
+    return replaceMacros(getTemplateSrv().replace(str, scopedVars), range);
+  };
 
 // replaceMacros substitutes all available macros with their current value.
 export const replaceMacros = (str: string, range?: TimeRange) => {

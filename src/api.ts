@@ -76,7 +76,7 @@ export default class Api {
       cacheKey =
         cacheKey +
         (cacheKey.search(/\?/) >= 0 ? '&' : '?') +
-        params.flatMap(([k, vs]) => vs.map(v => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)).join('&');
+        params.flatMap(([k, vs]) => vs.map((v) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)).join('&');
     }
 
     if (this.lastCacheDuration !== cacheDurationSeconds) {
@@ -140,7 +140,7 @@ export default class Api {
         req.url +
         (req.url.search(/\?/) >= 0 ? '&' : '?') +
         Object.entries(params)
-          .flatMap(([k, vs]) => vs.map(v => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`))
+          .flatMap(([k, vs]) => vs.map((v) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`))
           .join('&');
     }
 

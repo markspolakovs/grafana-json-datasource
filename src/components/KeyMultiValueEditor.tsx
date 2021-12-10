@@ -7,8 +7,8 @@ import { Pair } from '../types';
 interface Props {
   columns: string[];
   addRowLabel: string;
-  values: Array<Pair<string, string[]>>
-  onChange: (rows: Array<Pair<string, string[]>>) => void
+  values: Array<Pair<string, string[]>>;
+  onChange: (rows: Array<Pair<string, string[]>>) => void;
 
   onBlur: () => void;
 }
@@ -19,8 +19,7 @@ export const KeyMultiValueEditor = ({ columns, values, onChange, addRowLabel, on
 
   const updateCell = (colIdx: number, rowIdx: number, valIdx: number, value: string) => {
     onChange(
-      values
-      .map(([key, vals]) => {
+      values.map(([key, vals]) => {
         if (colIdx === 0) {
           return [value, vals];
         } else if (colIdx === 1) {
@@ -41,24 +40,28 @@ export const KeyMultiValueEditor = ({ columns, values, onChange, addRowLabel, on
   };
 
   const addMultiValue = (row: number, i: number) => {
-    onChange(values.map(([key, vals], rowIdx) => {
-      if (rowIdx === row) {
-        return [key, [...vals.slice(0, i + 1), '', ...vals.slice(i + 1)]];
-      } else {
-        return [key, vals];
-      }
-    }))
-  }
+    onChange(
+      values.map(([key, vals], rowIdx) => {
+        if (rowIdx === row) {
+          return [key, [...vals.slice(0, i + 1), '', ...vals.slice(i + 1)]];
+        } else {
+          return [key, vals];
+        }
+      })
+    );
+  };
 
   const removeMultiValue = (row: number, i: number) => {
-    onChange(values.map(([key, vals], rowIdx) => {
-      if (rowIdx === row) {
-        return [key, [...vals.slice(0, i), ...vals.slice(i + 1)]];
-      } else {
-        return [key, vals];
-      }
-    }))
-  }
+    onChange(
+      values.map(([key, vals], rowIdx) => {
+        if (rowIdx === row) {
+          return [key, [...vals.slice(0, i), ...vals.slice(i + 1)]];
+        } else {
+          return [key, vals];
+        }
+      })
+    );
+  };
 
   return values.length === 0 ? (
     <Button
@@ -86,30 +89,39 @@ export const KeyMultiValueEditor = ({ columns, values, onChange, addRowLabel, on
           <tr key={rowIdx} className={styles.row}>
             {row.map((cell, colIdx) => (
               <td key={colIdx} className={styles.td}>
-                {typeof cell === "string" ? (
+                {typeof cell === 'string' ? (
                   <input
-                  value={cell}
-                  onChange={(e) => updateCell(colIdx, rowIdx, 0, e.currentTarget.value)}
-                  onBlur={onBlur}
-                  className={styles.input}
-                />
-                ) : (<table className={css`
-                  width: 100%;
-                  margin-right: 0;
-                `}>
-                  <tbody className={styles.tbody}>
+                    value={cell}
+                    onChange={(e) => updateCell(colIdx, rowIdx, 0, e.currentTarget.value)}
+                    onBlur={onBlur}
+                    className={styles.input}
+                  />
+                ) : (
+                  <table
+                    className={css`
+                      width: 100%;
+                      margin-right: 0;
+                    `}
+                  >
+                    <tbody className={styles.tbody}>
                       {cell.map((val, valIdx) => (
-                      <tr key={valIdx} className={styles.row}>
-                        <td className={styles.td + " " + css`
-                          width: 100%;
-                        `}>
-                        <input
-                          value={val}
-                          onChange={(e) => updateCell(colIdx, rowIdx, valIdx, e.currentTarget.value)}
-                          onBlur={onBlur}
-                          className={styles.input}
-                        />
-                        </td>
+                        <tr key={valIdx} className={styles.row}>
+                          <td
+                            className={
+                              styles.td +
+                              ' ' +
+                              css`
+                                width: 100%;
+                              `
+                            }
+                          >
+                            <input
+                              value={val}
+                              onChange={(e) => updateCell(colIdx, rowIdx, valIdx, e.currentTarget.value)}
+                              onBlur={onBlur}
+                              className={styles.input}
+                            />
+                          </td>
                           <td>
                             <div
                               className={css`
@@ -146,12 +158,13 @@ export const KeyMultiValueEditor = ({ columns, values, onChange, addRowLabel, on
                               >
                                 <Icon name="minus" />
                               </a>
-                          </div>
-                        </td>
+                            </div>
+                          </td>
                         </tr>
-                    ))}
-                  </tbody>
-                </table>)}
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </td>
             ))}
             <td className={styles.td}>

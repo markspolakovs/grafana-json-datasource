@@ -223,7 +223,7 @@ export class JsonDataSource extends DataSourceApi<JsonApiQuery, JsonApiDataSourc
       query.cacheDurationSeconds,
       query.method,
       interpolate(query.urlPath),
-      (query.params ?? []).map(interpolateKeyValue),
+      (query.params ?? []).map(([k, vs]) => [interpolate(k), vs.map(v => interpolate(v))]),
       (query.headers ?? []).map(interpolateKeyValue),
       interpolate(query.body)
     );

@@ -21,11 +21,11 @@ export default class Api {
   async get(
     method: string,
     path: string,
-    params?: Array<Pair<string, string>>,
+    params?: Array<Pair<string, string[]>>,
     headers?: Array<Pair<string, string>>,
     body?: string
   ) {
-    const paramsData: Record<string, string> = {};
+    const paramsData: Record<string, string[]> = {};
 
     (params ?? []).forEach(([key, value]) => {
       if (key) {
@@ -34,7 +34,7 @@ export default class Api {
     });
 
     this.params.forEach((value, key) => {
-      paramsData[key] = value;
+      paramsData[key].push(value);
     });
 
     const response = this._request(method, path, paramsData, headers, body);
@@ -46,10 +46,10 @@ export default class Api {
    * Used as a health check.
    */
   async test() {
-    const data: Record<string, string> = {};
+    const data: Record<string, string[]> = {};
 
     this.params.forEach((value, key) => {
-      data[key] = value;
+      data[key] = [value];
     });
 
     return this._request('GET', '', data).toPromise();
@@ -62,7 +62,7 @@ export default class Api {
     cacheDurationSeconds: number,
     method: string,
     path: string,
-    params: Array<Pair<string, string>>,
+    params: Array<Pair<string, string[]>>,
     headers?: Array<Pair<string, string>>,
     body?: string
   ) {
@@ -76,7 +76,7 @@ export default class Api {
       cacheKey =
         cacheKey +
         (cacheKey.search(/\?/) >= 0 ? '&' : '?') +
-        params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+        params.flatMap(([k, vs]) => vs.map(v => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)).join('&');
     }
 
     if (this.lastCacheDuration !== cacheDurationSeconds) {
@@ -106,7 +106,7 @@ export default class Api {
   _request(
     method: string,
     path: string,
-    params?: Record<string, string>,
+    params?: Record<string, string[]>,
     headers?: Array<Pair<string, string>>,
     data?: string
   ): Observable<any> {
@@ -140,7 +140,7 @@ export default class Api {
         req.url +
         (req.url.search(/\?/) >= 0 ? '&' : '?') +
         Object.entries(params)
-          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+          .flatMap(([k, vs]) => vs.map(v => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`))
           .join('&');
     }
 

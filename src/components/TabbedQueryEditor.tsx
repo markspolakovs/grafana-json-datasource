@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { defaultQuery, JsonApiQuery, Pair } from '../types';
 import { KeyValueEditor } from './KeyValueEditor';
+import { KeyMultiValueEditor } from './KeyMultiValueEditor';
 import { PathEditor } from './PathEditor';
 
 // Display a warning message when user adds any of the following headers.
@@ -37,7 +38,7 @@ export const TabbedQueryEditor = ({ query, onChange, onRunQuery, fieldsTab, expe
     onRunQuery();
   };
 
-  const onParamsChange = (params: Array<Pair<string, string>>) => {
+  const onParamsChange = (params: Array<Pair<string, string[]>>) => {
     onChange({ ...q, params });
     onRunQuery();
   };
@@ -72,9 +73,9 @@ export const TabbedQueryEditor = ({ query, onChange, onRunQuery, fieldsTab, expe
     {
       title: 'Params',
       content: (
-        <KeyValueEditor
+        <KeyMultiValueEditor
           addRowLabel={'Add param'}
-          columns={['Key', 'Value']}
+          columns={['Key', 'Value(s)']}
           values={q.params ?? []}
           onChange={onParamsChange}
           onBlur={() => onRunQuery()}
